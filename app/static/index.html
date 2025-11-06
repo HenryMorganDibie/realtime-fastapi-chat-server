@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChatterBox</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4f46e5',
+                        secondary: '#8b5cf6',
+                        background: '#f9fafb',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; min-height: 100vh; }
+        #chatLog { max-height: 400px; overflow-y: auto; }
+        .message { margin-bottom: 0.5rem; padding: 0.5rem 1rem; border-radius: 0.5rem; }
+        .sent { background-color: #e0e7ff; text-align: right; }
+        .received { background-color: #f0fdf4; text-align: left; }
+        .group { font-style: italic; color: #6b7280; }
+        #passwordLengthMsg { font-size: 0.8rem; color: #6b7280; }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center p-4">
+<div class="w-full max-w-lg bg-white shadow-xl rounded-xl p-6">
+    <header class="text-center mb-4">
+        <h1 class="text-3xl font-bold text-primary">💬 ChatterBox</h1>
+        <p class="text-gray-500 text-sm">Connect. Chat. Collaborate.</p>
+    </header>
+
+    <!-- Precheck Username -->
+    <div id="preCheckSection" class="mb-4 space-y-2">
+        <input type="text" id="preUsername" placeholder="Enter your username" class="w-full p-2 border rounded" />
+        <button id="preCheckBtn" class="w-full py-2 bg-primary text-white rounded hover:bg-secondary transition">Next</button>
+        <div id="preCheckMsg" class="text-sm text-red-500 hidden"></div>
+    </div>
+
+    <!-- Login Section -->
+    <div id="loginSection" class="mb-4 space-y-2 hidden">
+        <input type="password" id="loginPassword" placeholder="Enter password" class="w-full p-2 border rounded" />
+        <button id="loginBtn" class="w-full py-2 bg-primary text-white rounded hover:bg-secondary transition">Login</button>
+        <div id="loginMsg" class="text-sm text-red-500 hidden"></div>
+    </div>
+
+    <!-- Register Section -->
+    <div id="registerSection" class="mb-4 space-y-2 hidden">
+        <input type="password" id="registerPassword" placeholder="Enter password" class="w-full p-2 border rounded" />
+        <div id="passwordLengthMsg">0 / 72 characters</div>
+        <button id="registerBtn" class="w-full py-2 bg-secondary text-white rounded hover:bg-primary transition">Register</button>
+        <div id="registerMsg" class="text-sm text-red-500 hidden"></div>
+    </div>
+
+    <!-- Chat Section -->
+    <div id="chatSection" class="hidden flex flex-col space-y-2">
+        <div id="chatLog" class="bg-gray-50 p-3 rounded flex-1 flex flex-col overflow-y-auto"></div>
+        <div class="flex space-x-2 mt-2">
+            <input type="text" id="targetUser" placeholder="Target username / group" class="flex-1 p-2 border rounded" />
+            <input type="text" id="messageInput" placeholder="Type your message..." class="flex-2 p-2 border rounded" />
+            <button id="sendBtn" class="py-2 px-4 bg-primary text-white rounded hover:bg-secondary transition">Send</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let token = null;
+    let ws = null;
+    let currentUsername = null;
+    const MAX_PASSWORD_LENGTH = 72;
+
+    const preCheckMsg = document.getElementById('preCheckMsg');
+    const loginMsg = document.getElementById('loginMsg');
+    const registerMsg = document.getElementById('registerMsg');
+    const passwordLengthMsg = document.getElementById('passwordLengthMsg');
+
+    // --- Precheck Username ---
+    document.getElementById('preCheckBtn').addEventListener('click', async () => {
+        const username = document.getElementById('preUsername').value.trim();
+        if (!username) return;
+        currentUsername = username;
+
+        try {
+            const res = await fetch('http://localhost:8000/auth/precheck', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username })
+            });
+            const data = await res.json();
+
+            document.getElementById('preCheckSection').classList.add('hidden');
+
+            if (data.exists) {
+                document.getElementById('loginSection').classList.remove('hidden');
+            } else {
+                document.getElementById('registerSection').classList.remove('hidden');
+            }
+        } catch (err) {
+            preCheckMsg.textContent = 'Error checking username.';
+            preCheckMsg.classList.remove('hidden');
+        }
+    });
+
+    // --- Live password length feedback ---
+    document.getElementById('registerPassword').addEventListener('input', (e) => {
+        const len = e.target.value.length;
+        passwordLengthMsg.textContent = `${len} / ${MAX_PASSWORD_LENGTH} characters`;
+        passwordLengthMsg.style.color = len > MAX_PASSWORD_LENGTH ? 'red' : '#6b7280';
+    });
+
+    // --- REGISTER ---
+    document.getElementById('registerBtn').addEventListener('click', async () => {
+        const password = document.getElementById('registerPassword').value.trim();
+
+        if(!currentUsername || !password) return;
+
+        if(password.length > MAX_PASSWORD_LENGTH){
+            registerMsg.textContent = `Password cannot exceed ${MAX_PASSWORD_LENGTH} characters.`;
+            registerMsg.classList.remove('hidden');
+            return;
+        }
+
+        try {
+            const res = await fetch('http://localhost:8000/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: currentUsername, password })
+            });
+
+            if(!res.ok) throw new Error('Registration failed');
+
+            registerMsg.textContent = '✅ Registration successful! Please login.';
+            registerMsg.classList.remove('hidden');
+
+            document.getElementById('registerSection').classList.add('hidden');
+            document.getElementById('loginSection').classList.remove('hidden');
+        } catch(err){
+            registerMsg.textContent = '❌ Registration failed. Username may already exist.';
+            registerMsg.classList.remove('hidden');
+        }
+    });
+
+    // --- LOGIN ---
+    document.getElementById('loginBtn').addEventListener('click', async () => {
+        const password = document.getElementById('loginPassword').value.trim();
+        if(!currentUsername || !password) return;
+
+        try {
+            const res = await fetch('http://localhost:8000/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: currentUsername, password })
+            });
+            if(!res.ok) throw new Error('Login failed');
+
+            const data = await res.json();
+            token = data.access_token;
+
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('chatSection').classList.remove('hidden');
+
+            connectWebSocket(currentUsername);
+        } catch(err){
+            loginMsg.textContent = 'Login failed. Check your credentials.';
+            loginMsg.classList.remove('hidden');
+        }
+    });
+
+    // --- CONNECT WEBSOCKET ---
+    function connectWebSocket(username){
+        ws = new WebSocket(`ws://localhost:8000/ws/chat?token=${token}`);
+
+        ws.onopen = () => console.log('✅ Connected to ChatterBox Server');
+
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            const chatLog = document.getElementById('chatLog');
+
+            const msgDiv = document.createElement('div');
+
+            // Format for group or one-to-one
+            if(data.group){
+                msgDiv.textContent = `[Group: ${data.group}] ${data.sender}: ${data.content}`;
+                msgDiv.className = `message received group`;
+            } else {
+                msgDiv.textContent = `${data.sender || 'System'}: ${data.content}`;
+                msgDiv.className = `message ${data.sender === username ? 'sent' : 'received'}`;
+            }
+
+            chatLog.appendChild(msgDiv);
+            chatLog.scrollTop = chatLog.scrollHeight;
+        };
+
+        ws.onclose = () => console.log('⚠️ Disconnected from ChatterBox Server');
+    }
+
+    // --- SEND MESSAGE ---
+    document.getElementById('sendBtn').addEventListener('click', () => {
+        const target = document.getElementById('targetUser').value.trim();
+        const content = document.getElementById('messageInput').value.trim();
+        if(!target || !content) return;
+
+        // Determine if sending to a group or user
+        const messageType = target.startsWith('#') ? 'group' : 'one_to_one';
+        const payload = {
+            type: messageType,
+            target: target.replace('#', ''), // Remove # for group
+            content: content
+        };
+
+        ws.send(JSON.stringify(payload));
+        document.getElementById('messageInput').value = '';
+    });
+</script>
+</body>
+</html>
