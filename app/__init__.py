@@ -1,4 +1,5 @@
-﻿import os
+﻿# app/__init__.py
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -9,11 +10,12 @@ from app.database.models import Base
 # =====================================================
 # Database Configuration
 # =====================================================
+# Ensure you are loading .env variables correctly in main.py or top-level file
 SQLALCHEMY_DATABASE_URL = os.getenv("DB_URL", "sqlite+aiosqlite:///./chat_db.sqlite")
 
 engine = create_async_engine(
     SQLALCHEMY_DATABASE_URL,
-    echo=False,
+    echo=True,
 )
 
 AsyncSessionLocal = sessionmaker(
@@ -66,10 +68,16 @@ async def root():
     return {"message": "🚀 FastAPI Realtime Chat Server is running!"}
 
 # =====================================================
-# Include Routers
+# Include Routers 🏗️ UPDATED FOR MODULARIZATION
 # =====================================================
-from app import routers
-app.include_router(routers.router)
+# Remove the old import: from app import routers
+# Remove the old inclusion: app.include_router(routers.router)
+
+from app.auth.router import router as auth_router
+from app.chat.router import router as chat_router
+
+app.include_router(auth_router)  # Routes are now accessible via /auth/...
+app.include_router(chat_router) # Routes are accessible directly (e.g., /groups) or via their prefixes (/ws/chat)
 
 # =====================================================
 # Database Initialization on Startup

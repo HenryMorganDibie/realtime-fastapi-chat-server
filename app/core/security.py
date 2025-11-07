@@ -11,10 +11,13 @@ from app.schemas.common import TokenPayload
 
 # --- LOAD ENV VARIABLES ---
 load_dotenv()
+
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-fallback-secret-key")
 ALGORITHM = "HS256"
+
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 30))
 REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", 7))
+RESET_TOKEN_EXPIRE_MINUTES = int(os.getenv("RESET_TOKEN_EXPIRE_MINUTES", 15))  # For forgot password flow
 
 # --- PASSWORD HASHING (Argon2) ---
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
@@ -38,13 +41,15 @@ class SecurityService:
 
     @staticmethod
     def create_token(user_id: int, token_type: str = "access") -> str:
-        """Create a JWT token (access or refresh)."""
+        """Create a JWT token (access, refresh, or reset)."""
         if token_type == "access":
             expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
         elif token_type == "refresh":
             expire = datetime.utcnow() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+        elif token_type == "reset":
+            expire = datetime.utcnow() + timedelta(minutes=RESET_TOKEN_EXPIRE_MINUTES)
         else:
-            raise ValueError("Invalid token type. Must be 'access' or 'refresh'.")
+            raise ValueError("Invalid token type. Must be 'access', 'refresh', or 'reset'.")
 
         to_encode = {
             "exp": expire,

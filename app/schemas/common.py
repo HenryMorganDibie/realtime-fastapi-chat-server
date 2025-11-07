@@ -1,4 +1,4 @@
-﻿from pydantic import BaseModel, Field, validator
+﻿from pydantic import BaseModel, Field, validator, EmailStr
 from typing import Optional, List
 from datetime import datetime
 
@@ -27,6 +27,7 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     """Schema for user registration / login."""
     password: str = Field(..., min_length=6, max_length=MAX_PASSWORD_LENGTH)
+    email: EmailStr
 
     @validator("password")
     def password_length(cls, v):
@@ -41,7 +42,7 @@ class UserDB(UserBase):
     created_at: datetime
 
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 # --- Message Schemas ---
 
@@ -60,14 +61,14 @@ class MessageResponse(MessageBase):
     timestamp: datetime
 
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 # --- Group Schemas ---
 
 class GroupCreate(BaseModel):
     """Schema for creating a group."""
     name: str
-    member_usernames: List[str] = []
+    member_usernames: List[str] = Field(default_factory=list)
 
 class GroupResponse(BaseModel):
     """Schema for group details."""

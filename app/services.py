@@ -5,7 +5,8 @@ from datetime import datetime
 
 from fastapi import WebSocket, WebSocketDisconnect, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, update
+from sqlalchemy.orm import selectinload
 
 from app.database.models import (
     UserModel,
@@ -22,7 +23,7 @@ __all__ = ["UserService", "ChatService", "ConnectionManager", "manager"]
 
 
 # ======================================================
-#                    USER SERVICE
+#                      USER SERVICE (Updated)
 # ======================================================
 class UserService:
     """Handles all user database and authentication logic."""
@@ -46,6 +47,16 @@ class UserService:
         print(f"[DEBUG] get_user_by_id({user_id}) -> {user}")
         return user
 
+    # NEW METHOD 1: Retrieve user by email for forgot password
+    async def get_user_by_email(self, email: str) -> Optional[UserModel]:
+        """Retrieve a user by email."""
+        # NOTE: Assumes UserModel has an 'email' field.
+        stmt = select(UserModel).where(UserModel.email == email)
+        result = await self.db.execute(stmt)
+        user = result.scalars().first()
+        print(f"[DEBUG] get_user_by_email('{email}') -> {user}")
+        return user
+
     async def create_user(self, user: UserCreate) -> UserModel:
         """Create a new user with a hashed password and proper error handling."""
         try:
@@ -56,12 +67,28 @@ class UserService:
                     detail="Username already registered",
                 )
 
+            # Prevent duplicate email registration (assumes schema includes email)
+            if getattr(user, "email", None):
+                existing_email_user = await self.get_user_by_email(user.email)
+                if existing_email_user:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Email already registered",
+                    )
+
             hashed_password = SecurityService.hash_password(user.password)
-            db_user = UserModel(username=user.username, hashed_password=hashed_password)
+
+            # Create DB model instance
+            db_user = UserModel(
+                username=user.username,
+                email=getattr(user, "email", None),
+                hashed_password=hashed_password,
+            )
+
             self.db.add(db_user)
             await self.db.commit()
             await self.db.refresh(db_user)
-            print(f"[DEBUG] Created new user: {db_user.username}")
+            print(f"[DEBUG] Created new user: {db_user.username} with email: {db_user.email}")
             return db_user
 
         except HTTPException:
@@ -70,7 +97,7 @@ class UserService:
             await self.db.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to register user: {str(e)}"
+                detail=f"Failed to register user: {str(e)}",
             )
 
     async def authenticate_user(self, username: str, password: str) -> UserModel:
@@ -83,9 +110,21 @@ class UserService:
             )
         return user
 
+    # NEW METHOD 2: Update user password for reset
+    async def update_password(self, user_id: int, hashed_password: str) -> None:
+        """Update a user's hashed password directly in the database."""
+        stmt = (
+            update(UserModel)
+            .where(UserModel.id == user_id)
+            .values(hashed_password=hashed_password)
+        )
+        await self.db.execute(stmt)
+        await self.db.commit()
+        print(f"[DEBUG] User {user_id} password updated.")
+
 
 # ======================================================
-#                    CHAT SERVICE
+#                 CHAT SERVICE (N+1 Fix Applied)
 # ======================================================
 class ChatService:
     """Handles chat message persistence and group management."""
@@ -110,7 +149,10 @@ class ChatService:
     async def get_one_to_one_history(
         self, user_a_id: int, user_b_id: int, limit: int = 50
     ) -> List[OneToOneMessageModel]:
-        """Retrieve conversation history between two users."""
+        """
+        Retrieve conversation history between two users, eager loading the sender.
+        (N+1 Fix is included here)
+        """
         stmt = (
             select(OneToOneMessageModel)
             .where(
@@ -119,15 +161,16 @@ class ChatService:
             )
             .order_by(OneToOneMessageModel.timestamp.desc())
             .limit(limit)
+            .options(selectinload(OneToOneMessageModel.sender))
         )
         result = await self.db.execute(stmt)
-        return result.scalars().all()[::-1]  # chronological order
+        return result.scalars().unique().all()[::-1]
 
     async def create_group(self, name: str, member_ids: List[int]) -> GroupModel:
         """Create a new group and add initial members."""
         db_group = GroupModel(name=name)
         self.db.add(db_group)
-        await self.db.flush()  # Get group ID before commit
+        await self.db.flush()
 
         memberships = [
             GroupMembershipModel(group_id=db_group.id, user_id=user_id)
@@ -175,14 +218,14 @@ class ChatService:
 
 
 # ======================================================
-#               CONNECTION MANAGER (WebSocket)
+#      CONNECTION MANAGER (WebSocket)
 # ======================================================
 class ConnectionManager:
     """Manages active WebSocket connections and group memberships."""
 
     def __init__(self):
-        self.active_connections: Dict[int, WebSocket] = {}  # user_id -> ws
-        self.group_members: Dict[int, Set[int]] = {}        # group_id -> set(user_ids)
+        self.active_connections: Dict[int, WebSocket] = {}
+        self.group_members: Dict[int, Set[int]] = {}
 
     async def connect(self, user_id: int, websocket: WebSocket):
         await websocket.accept()
