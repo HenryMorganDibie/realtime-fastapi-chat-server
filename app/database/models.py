@@ -22,15 +22,25 @@ class UserModel(Base):
     received_messages = relationship("OneToOneMessageModel", foreign_keys="OneToOneMessageModel.receiver_id", back_populates="receiver", cascade="all, delete-orphan")
     group_memberships = relationship("GroupMembershipModel", back_populates="user", cascade="all, delete-orphan")
     group_messages = relationship("GroupMessageModel", back_populates="sender", cascade="all, delete-orphan")
+    # 🟢 NEW: Back-reference for groups created by this user
+    created_groups = relationship("GroupModel", back_populates="creator", cascade="all, delete-orphan") 
 
 class GroupModel(Base):
     """Database model for chat groups."""
     __tablename__ = "groups"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, index=True)
+    
+    # 🛑 FIX: Add the creator_id column (Foreign Key to UserModel)
+    creator_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    
     is_private = Column(Integer, default=0)
     created_at = Column(DateTime, default=datetime.utcnow)
 
+    # Relationships
+    # 🟢 NEW: Relationship to the user who created the group
+    creator = relationship("UserModel", foreign_keys=[creator_id], back_populates="created_groups")
+    
     members = relationship("GroupMembershipModel", back_populates="group", cascade="all, delete-orphan")
     messages = relationship("GroupMessageModel", back_populates="group", cascade="all, delete-orphan")
 

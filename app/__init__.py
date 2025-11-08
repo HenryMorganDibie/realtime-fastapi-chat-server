@@ -1,5 +1,4 @@
-﻿# app/__init__.py
-import os
+﻿import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -57,8 +56,14 @@ app.add_middleware(
 
 # =====================================================
 # Serve Static Files
+# 🛑 FIX APPLIED HERE: Use an absolute path to ensure correct loading 
+# regardless of where uvicorn is launched from.
+# os.path.dirname(__file__) gets the directory of this file (app/)
+# We join 'static' to it, resulting in 'app/static' as an absolute path.
 # =====================================================
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
+STATIC_FILES_DIR = os.path.join(os.path.dirname(__file__), "static")
+app.mount("/static", StaticFiles(directory=STATIC_FILES_DIR), name="static")
+
 
 # =====================================================
 # Root Endpoint (for sanity check)
@@ -70,8 +75,6 @@ async def root():
 # =====================================================
 # Include Routers 🏗️ UPDATED FOR MODULARIZATION
 # =====================================================
-# Remove the old import: from app import routers
-# Remove the old inclusion: app.include_router(routers.router)
 
 from app.auth.router import router as auth_router
 from app.chat.router import router as chat_router

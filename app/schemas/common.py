@@ -61,9 +61,15 @@ class MessageResponse(MessageBase):
     timestamp: datetime
 
     class Config:
+        # Note: In Pydantic V2, 'orm_mode' is deprecated, use 'from_attributes = True'
         orm_mode = True
 
 # --- Group Schemas ---
+
+# 🟢 NEW: Schema to handle list of usernames in request body (for adding/removing members)
+class UsernamesList(BaseModel):
+    """Schema for passing a list of usernames in a request body."""
+    member_usernames: List[str]
 
 class GroupCreate(BaseModel):
     """Schema for creating a group."""
