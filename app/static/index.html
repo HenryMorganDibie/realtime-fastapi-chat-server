@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ChatterBox</title>
+    <title>ChatterBox - Full Test Client</title>
 
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -14,7 +13,7 @@
                     colors: {
                         primary: '#4f46e5',
                         secondary: '#8b5cf6',
-                        background: '#f9fafb',
+                        background: '#f9fafb'
                     }
                 }
             }
@@ -22,203 +21,439 @@
     </script>
 
     <style>
-        body { font-family: 'Inter', sans-serif; min-height: 100vh; }
+        body { font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; min-height: 100vh; }
         #chatLog { max-height: 400px; overflow-y: auto; }
-        .message { margin-bottom: 0.5rem; padding: 0.5rem 1rem; border-radius: 0.5rem; }
-        .sent { background-color: #e0e7ff; text-align: right; }
-        .received { background-color: #f0fdf4; text-align: left; }
-        .group { font-style: italic; color: #6b7280; }
+        .message { margin-bottom: 0.5rem; padding: 0.5rem 1rem; border-radius: 0.5rem; line-height: 1.25rem; word-break: break-word; }
+        .sent { background-color: #e0e7ff; text-align: right; margin-left: auto; width: fit-content; max-width: 80%; }
+        .received { background-color: #f0fdf4; text-align: left; margin-right: auto; width: fit-content; max-width: 80%; }
+        .system { background-color: #fef3c7; text-align: center; font-style: italic; color: #b45309; margin: 0.25rem auto; }
+        .group { border-left: 3px solid #c7d2fe; padding-left: 0.75rem; }
+        .group-name { font-weight: bold; color: #6b7280; margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid #e5e7eb; }
         #passwordLengthMsg { font-size: 0.8rem; color: #6b7280; }
+        #typingIndicator { height: 1.5rem; color: #10b981; font-style: italic; }
     </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center p-4">
-<div class="w-full max-w-lg bg-white shadow-xl rounded-xl p-6">
-    <header class="text-center mb-4">
-        <h1 class="text-3xl font-bold text-primary">💬 ChatterBox</h1>
-        <p class="text-gray-500 text-sm">Connect. Chat. Collaborate.</p>
-    </header>
+    <div class="w-full max-w-lg bg-white shadow-xl rounded-xl p-6">
+        <header class="text-center mb-4">
+            <h1 class="text-3xl font-bold text-primary">💬 ChatterBox</h1>
+            <p class="text-gray-500 text-sm">Full Test Client</p>
+        </header>
 
-    <!-- Precheck Username -->
-    <div id="preCheckSection" class="mb-4 space-y-2">
-        <input type="text" id="preUsername" placeholder="Enter your username" class="w-full p-2 border rounded" />
-        <button id="preCheckBtn" class="w-full py-2 bg-primary text-white rounded hover:bg-secondary transition">Next</button>
-        <div id="preCheckMsg" class="text-sm text-red-500 hidden"></div>
-    </div>
+        <div id="preCheckSection" class="mb-4 space-y-2">
+            <input type="text" id="preUsername" placeholder="Enter your username" class="w-full p-2 border rounded" />
+            <button id="preCheckBtn" class="w-full py-2 bg-primary text-white rounded hover:bg-secondary transition">Next</button>
+            <div id="preCheckMsg" class="text-sm text-red-500 hidden"></div>
+        </div>
 
-    <!-- Login Section -->
-    <div id="loginSection" class="mb-4 space-y-2 hidden">
-        <input type="password" id="loginPassword" placeholder="Enter password" class="w-full p-2 border rounded" />
-        <button id="loginBtn" class="w-full py-2 bg-primary text-white rounded hover:bg-secondary transition">Login</button>
-        <div id="loginMsg" class="text-sm text-red-500 hidden"></div>
-    </div>
+        <div id="loginSection" class="mb-4 space-y-2 hidden">
+            <input type="email" id="loginEmail" placeholder="Enter your email" class="w-full p-2 border rounded" />
+            <input type="password" id="loginPassword" placeholder="Enter password" class="w-full p-2 border rounded" />
+            <button id="loginBtn" class="w-full py-2 bg-primary text-white rounded hover:bg-secondary transition">Login</button>
+            <div id="loginMsg" class="text-sm text-red-500 hidden"></div>
+        </div>
 
-    <!-- Register Section -->
-    <div id="registerSection" class="mb-4 space-y-2 hidden">
-        <input type="password" id="registerPassword" placeholder="Enter password" class="w-full p-2 border rounded" />
-        <div id="passwordLengthMsg">0 / 72 characters</div>
-        <button id="registerBtn" class="w-full py-2 bg-secondary text-white rounded hover:bg-primary transition">Register</button>
-        <div id="registerMsg" class="text-sm text-red-500 hidden"></div>
-    </div>
+        <div id="registerSection" class="mb-4 space-y-2 hidden">
+            <input type="email" id="registerEmail" placeholder="Enter your email" class="w-full p-2 border rounded" />
+            <input type="password" id="registerPassword" placeholder="Enter password" class="w-full p-2 border rounded" />
+            <div id="passwordLengthMsg">0 / 72 characters</div>
+            <button id="registerBtn" class="w-full py-2 bg-secondary text-white rounded hover:bg-primary transition">Register</button>
+            <div id="registerMsg" class="text-sm text-red-500 hidden"></div>
+        </div>
 
-    <!-- Chat Section -->
-    <div id="chatSection" class="hidden flex flex-col space-y-2">
-        <div id="chatLog" class="bg-gray-50 p-3 rounded flex-1 flex flex-col overflow-y-auto"></div>
-        <div class="flex space-x-2 mt-2">
-            <input type="text" id="targetUser" placeholder="Target username / group" class="flex-1 p-2 border rounded" />
-            <input type="text" id="messageInput" placeholder="Type your message..." class="flex-2 p-2 border rounded" />
-            <button id="sendBtn" class="py-2 px-4 bg-primary text-white rounded hover:bg-secondary transition">Send</button>
+        <div id="groupSection" class="mb-4 p-3 border rounded bg-gray-50 hidden">
+            <h3 class="font-bold text-sm mb-2 text-primary">Group Management</h3>
+            <select id="groupActionSelect" class="w-full p-2 border rounded mb-2">
+                <option value="create">Create Group</option>
+                <option value="add">Add Member(s)</option>
+                <option value="remove">Remove Member(s)</option>
+                <option value="leave">Leave Group</option>
+                <option value="transfer">Transfer Ownership</option>
+                <option value="delete">Delete Group</option>
+            </select>
+            <input type="text" id="groupName" placeholder="Group Name (e.g. #team-dev)" class="w-full p-2 border rounded mb-2" />
+            <input type="text" id="groupMembers" placeholder="Other Usernames (comma-separated)" class="w-full p-2 border rounded mb-2" />
+            <button id="createGroupBtn" class="w-full py-1 bg-secondary text-white text-sm rounded hover:bg-primary transition">Perform Action</button>
+            <div id="groupMsg" class="text-xs text-red-500 mt-1 hidden"></div>
+        </div>
+
+        <div id="chatSection" class="hidden flex flex-col space-y-2">
+            <div class="flex space-x-2">
+                <input type="text" id="targetUser" placeholder="User / #group" class="flex-1 p-2 border rounded" />
+                <button id="loadHistoryBtn" class="py-2 px-4 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 transition text-sm">Load History</button>
+                <button id="toggleGroupBtn" class="py-2 px-4 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 transition text-sm hidden">Group Actions</button>
+            </div>
+            <div id="typingIndicator" class="text-sm"></div> 
+            <div id="chatLog" class="bg-gray-50 p-3 rounded flex-1 flex flex-col overflow-y-auto"></div>
+            <div class="flex space-x-2 mt-2">
+                <input type="text" id="messageInput" placeholder="Type your message..." class="flex-2 p-2 border rounded" />
+                <button id="sendBtn" class="py-2 px-4 bg-primary text-white rounded hover:bg-secondary transition">Send</button>
+            </div>
         </div>
     </div>
-</div>
 
-<script>
-    let token = null;
-    let ws = null;
-    let currentUsername = null;
-    const MAX_PASSWORD_LENGTH = 72;
+    <script>
+    (function () {
+        'use strict';
 
-    const preCheckMsg = document.getElementById('preCheckMsg');
-    const loginMsg = document.getElementById('loginMsg');
-    const registerMsg = document.getElementById('registerMsg');
-    const passwordLengthMsg = document.getElementById('passwordLengthMsg');
+        // State
+        let token = null;
+        let ws = null;
+        let currentUsername = null;
+        let typingTimeout = null; // Added for typing indicator
+        let isTyping = false;     // Added for typing indicator
 
-    // --- Precheck Username ---
-    document.getElementById('preCheckBtn').addEventListener('click', async () => {
-        const username = document.getElementById('preUsername').value.trim();
-        if (!username) return;
-        currentUsername = username;
+        const MAX_PASSWORD_LENGTH = 72;
+        const API_BASE_URL = 'http://localhost:8000';
 
-        try {
-            const res = await fetch('http://localhost:8000/auth/precheck', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username })
-            });
-            const data = await res.json();
+        // DOM cache
+        const $ = sel => document.getElementById(sel);
+        const preCheckMsg = $('preCheckMsg');
+        const loginMsg = $('loginMsg');
+        const registerMsg = $('registerMsg');
+        const groupMsg = $('groupMsg');
+        const chatLog = $('chatLog');
+        const passwordLengthMsg = $('passwordLengthMsg');
+        const messageInput = $('messageInput');
+        const targetUser = $('targetUser');
+        const groupSection = $('groupSection');
+        const toggleGroupBtn = $('toggleGroupBtn');
+        const groupActionSelect = $('groupActionSelect');
+        const groupNameInput = $('groupName');
+        const groupMembersInput = $('groupMembers');
+        const createGroupBtn = $('createGroupBtn');
+        const sendBtn = $('sendBtn');
+        const typingIndicator = $('typingIndicator'); // Added
 
-            document.getElementById('preCheckSection').classList.add('hidden');
+        // Helpers
+        function show(el) { el && el.classList.remove('hidden'); }
+        function hide(el) { el && el.classList.add('hidden'); }
+        function setText(el, str) { if (!el) return; el.textContent = str; }
 
-            if (data.exists) {
-                document.getElementById('loginSection').classList.remove('hidden');
-            } else {
-                document.getElementById('registerSection').classList.remove('hidden');
-            }
-        } catch (err) {
-            preCheckMsg.textContent = 'Error checking username.';
-            preCheckMsg.classList.remove('hidden');
-        }
-    });
-
-    // --- Live password length feedback ---
-    document.getElementById('registerPassword').addEventListener('input', (e) => {
-        const len = e.target.value.length;
-        passwordLengthMsg.textContent = `${len} / ${MAX_PASSWORD_LENGTH} characters`;
-        passwordLengthMsg.style.color = len > MAX_PASSWORD_LENGTH ? 'red' : '#6b7280';
-    });
-
-    // --- REGISTER ---
-    document.getElementById('registerBtn').addEventListener('click', async () => {
-        const password = document.getElementById('registerPassword').value.trim();
-
-        if(!currentUsername || !password) return;
-
-        if(password.length > MAX_PASSWORD_LENGTH){
-            registerMsg.textContent = `Password cannot exceed ${MAX_PASSWORD_LENGTH} characters.`;
-            registerMsg.classList.remove('hidden');
-            return;
-        }
-
-        try {
-            const res = await fetch('http://localhost:8000/auth/register', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: currentUsername, password })
-            });
-
-            if(!res.ok) throw new Error('Registration failed');
-
-            registerMsg.textContent = '✅ Registration successful! Please login.';
-            registerMsg.classList.remove('hidden');
-
-            document.getElementById('registerSection').classList.add('hidden');
-            document.getElementById('loginSection').classList.remove('hidden');
-        } catch(err){
-            registerMsg.textContent = '❌ Registration failed. Username may already exist.';
-            registerMsg.classList.remove('hidden');
-        }
-    });
-
-    // --- LOGIN ---
-    document.getElementById('loginBtn').addEventListener('click', async () => {
-        const password = document.getElementById('loginPassword').value.trim();
-        if(!currentUsername || !password) return;
-
-        try {
-            const res = await fetch('http://localhost:8000/auth/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: currentUsername, password })
-            });
-            if(!res.ok) throw new Error('Login failed');
-
-            const data = await res.json();
-            token = data.access_token;
-
-            document.getElementById('loginSection').classList.add('hidden');
-            document.getElementById('chatSection').classList.remove('hidden');
-
-            connectWebSocket(currentUsername);
-        } catch(err){
-            loginMsg.textContent = 'Login failed. Check your credentials.';
-            loginMsg.classList.remove('hidden');
-        }
-    });
-
-    // --- CONNECT WEBSOCKET ---
-    function connectWebSocket(username){
-        ws = new WebSocket(`ws://localhost:8000/ws/chat?token=${token}`);
-
-        ws.onopen = () => console.log('✅ Connected to ChatterBox Server');
-
-        ws.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            const chatLog = document.getElementById('chatLog');
-
+        function displayMessage(sender, content, type = 'received', groupName = null) {
             const msgDiv = document.createElement('div');
-
-            // Format for group or one-to-one
-            if(data.group){
-                msgDiv.textContent = `[Group: ${data.group}] ${data.sender}: ${data.content}`;
-                msgDiv.className = `message received group`;
+            const baseClass = 'message';
+            if (type === 'system') {
+                msgDiv.className = `${baseClass} system`;
+                msgDiv.textContent = `[SYSTEM] ${content}`;
             } else {
-                msgDiv.textContent = `${data.sender || 'System'}: ${data.content}`;
-                msgDiv.className = `message ${data.sender === username ? 'sent' : 'received'}`;
+                const isSent = (sender === currentUsername);
+                const cls = isSent ? 'sent' : 'received';
+                msgDiv.className = `${baseClass} ${cls}` + (groupName ? ' group' : '');
+                if (groupName) msgDiv.textContent = `[#${groupName}] ${sender}: ${content}`;
+                else msgDiv.textContent = `${sender}: ${content}`;
             }
-
             chatLog.appendChild(msgDiv);
             chatLog.scrollTop = chatLog.scrollHeight;
-        };
+        }
 
-        ws.onclose = () => console.log('⚠️ Disconnected from ChatterBox Server');
-    }
+        function clearMessages() {
+            chatLog.innerHTML = '';
+            displayMessage('System', 'Chat log cleared.', 'system');
+        }
 
-    // --- SEND MESSAGE ---
-    document.getElementById('sendBtn').addEventListener('click', () => {
-        const target = document.getElementById('targetUser').value.trim();
-        const content = document.getElementById('messageInput').value.trim();
-        if(!target || !content) return;
+        async function jsonFetch(url, opts = {}) {
+            const headers = Object.assign({}, opts.headers || {});
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+            const cfg = Object.assign({}, opts, { headers });
+            const res = await fetch(url, cfg);
+            if (!res.ok) {
+                let body;
+                try { body = await res.json(); } catch (e) { body = { detail: await res.text() }; }
+                throw new Error(body.detail || `HTTP ${res.status}`);
+            }
+            // Check for 204 No Content before trying to parse JSON
+            if (res.status === 204) return null; 
+            return res.json();
+        }
 
-        // Determine if sending to a group or user
-        const messageType = target.startsWith('#') ? 'group' : 'one_to_one';
-        const payload = {
-            type: messageType,
-            target: target.replace('#', ''), // Remove # for group
-            content: content
-        };
+        // Group action UI
+        groupActionSelect.addEventListener('change', () => {
+            const action = groupActionSelect.value;
+            hide(groupMsg);
+            
+            if (action === 'leave' || action === 'delete') {
+                createGroupBtn.textContent = (action === 'delete') ? 'Delete Group' : 'Leave Group';
+                groupMembersInput.classList.add('hidden');
+                groupMembersInput.placeholder = 'Other Usernames (comma-separated)';
+            } else if (action === 'transfer') {
+                createGroupBtn.textContent = 'Transfer Ownership';
+                groupMembersInput.classList.remove('hidden');
+                groupMembersInput.placeholder = 'New Owner Username'; // Custom placeholder
+            } else {
+                createGroupBtn.textContent = 'Perform Action';
+                groupMembersInput.classList.remove('hidden');
+                groupMembersInput.placeholder = 'Other Usernames (comma-separated)';
+            }
+        });
+        groupActionSelect.dispatchEvent(new Event('change'));
 
-        ws.send(JSON.stringify(payload));
-        document.getElementById('messageInput').value = '';
-    });
-</script>
+        // Precheck
+        $('preCheckBtn').addEventListener('click', async () => {
+            const username = $('preUsername').value.trim();
+            if (!username) { setText(preCheckMsg, '❌ Username cannot be empty.'); show(preCheckMsg); return; }
+            currentUsername = username;
+            try {
+                const data = await jsonFetch(`${API_BASE_URL}/auth/precheck`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username })
+                });
+                hide($('preCheckSection'));
+                if (data.exists) show($('loginSection'));
+                else show($('registerSection'));
+                $('loginEmail').value = username + '@test.com'; // Pre-fill email for convenience
+                $('registerEmail').value = username + '@test.com';
+            } catch (err) {
+                setText(preCheckMsg, 'Error checking username. Server may be down.');
+                show(preCheckMsg);
+            }
+        });
+
+        // Register
+        $('registerBtn').addEventListener('click', async () => {
+            const password = $('registerPassword').value.trim();
+            const email = $('registerEmail').value.trim();
+            if (!currentUsername || !password || !email) {
+                setText(registerMsg, '❌ All fields are required.'); show(registerMsg); return;
+            }
+            if (password.length > MAX_PASSWORD_LENGTH) { setText(registerMsg, `Password cannot exceed ${MAX_PASSWORD_LENGTH} characters.`); show(registerMsg); return; }
+            try {
+                await jsonFetch(`${API_BASE_URL}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: currentUsername, email, password })
+                });
+                setText(registerMsg, '✅ Registration successful! Please login.'); registerMsg.classList.remove('text-red-500'); registerMsg.classList.add('text-green-500'); show(registerMsg);
+                hide($('registerSection')); show($('loginSection'));
+            } catch (err) { setText(registerMsg, `❌ ${err.message}`); registerMsg.classList.add('text-red-500'); show(registerMsg); }
+        });
+
+        // Login
+        $('loginBtn').addEventListener('click', async () => {
+            const password = $('loginPassword').value.trim();
+            const email = $('loginEmail').value.trim();
+            if (!currentUsername || !password || !email) { setText(loginMsg, '❌ All fields (Username, Email, Password) are required for login.'); show(loginMsg); return; }
+            try {
+                const data = await jsonFetch(`${API_BASE_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: currentUsername, email, password })
+                });
+                token = data.access_token;
+
+                if (targetUser) targetUser.value = '';
+                if (messageInput) messageInput.value = '';
+
+                hide($('loginSection')); show($('chatSection')); toggleGroupBtn.classList.remove('hidden');
+                connectWebSocket(currentUsername);
+            } catch (err) { setText(loginMsg, `❌ ${err.message}`); show(loginMsg); }
+        });
+
+        // Group management
+        createGroupBtn.addEventListener('click', async () => {
+            const action = groupActionSelect.value;
+            const groupName = groupNameInput.value.trim();
+            const membersStr = groupMembersInput.value.trim();
+            if (!groupName) { setText(groupMsg, '❌ Group name is required.'); show(groupMsg); return; }
+            const apiGroupName = groupName.startsWith('#') ? groupName.slice(1) : groupName;
+            
+            let member_usernames = [];
+            if (action === 'create' || action === 'add' || action === 'remove') {
+                if (!membersStr && action !== 'create') { setText(groupMsg, '❌ Member username(s) required for this action.'); show(groupMsg); return; }
+                member_usernames = membersStr.split(',').map(s => s.trim()).filter(Boolean);
+            } else if (action === 'transfer') {
+                if (!membersStr) { setText(groupMsg, '❌ New owner username is required.'); show(groupMsg); return; }
+            }
+
+            try {
+                let endpoint = `${API_BASE_URL}/groups`;
+                let opts = { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: apiGroupName, member_usernames }) };
+                
+                if (action === 'add') { endpoint = `${API_BASE_URL}/groups/${apiGroupName}/members`; opts.body = JSON.stringify({ member_usernames }); }
+                else if (action === 'remove') { endpoint = `${API_BASE_URL}/groups/${apiGroupName}/members`; opts.method = 'DELETE'; opts.body = JSON.stringify({ member_usernames }); }
+                else if (action === 'leave') { endpoint = `${API_BASE_URL}/groups/${apiGroupName}/leave`; opts.method = 'DELETE'; delete opts.body; }
+                else if (action === 'transfer') { 
+                    endpoint = `${API_BASE_URL}/groups/${apiGroupName}/owner`; 
+                    opts.method = 'PATCH'; 
+                    opts.body = JSON.stringify({ new_owner_username: membersStr });
+                }
+                else if (action === 'delete') { 
+                    endpoint = `${API_BASE_URL}/groups/${apiGroupName}`; 
+                    opts.method = 'DELETE'; 
+                    delete opts.body; 
+                }
+
+                await jsonFetch(endpoint, Object.assign({}, opts));
+                
+                let successMessage = `✅ Action '${action}' completed for #${apiGroupName}`;
+                if (action === 'delete') successMessage = `✅ Group #${apiGroupName} successfully deleted.`;
+                if (action === 'transfer') successMessage = `✅ Ownership of #${apiGroupName} transferred to ${membersStr}.`;
+
+                setText(groupMsg, successMessage); groupMsg.classList.remove('text-red-500'); groupMsg.classList.add('text-green-500'); show(groupMsg);
+                
+                if (action === 'create' || action === 'add') if (targetUser) targetUser.value = `#${apiGroupName}`;
+                if ((action === 'leave' || action === 'delete') && targetUser && targetUser.value === `#${apiGroupName}`) targetUser.value = '';
+                
+                groupNameInput.value = ''; groupMembersInput.value = '';
+            } catch (err) { setText(groupMsg, `❌ ${err.message}`); groupMsg.classList.add('text-red-500'); show(groupMsg); }
+        });
+
+        // Toggle group UI
+        $('toggleGroupBtn').addEventListener('click', () => {
+            if (!groupSection) return;
+            const isHidden = groupSection.classList.toggle('hidden');
+            toggleGroupBtn.textContent = isHidden ? 'Group Actions' : 'Close Group Actions';
+            if (isHidden) { hide(groupMsg); groupActionSelect.value = 'create'; groupActionSelect.dispatchEvent(new Event('change')); }
+        });
+
+        // Load History
+        $('loadHistoryBtn').addEventListener('click', async () => {
+            const target = targetUser ? targetUser.value.trim() : '';
+            if (!target) { displayMessage('System', '❌ Please specify a recipient (User or #group) to load history.', 'system'); return; }
+            const isGroup = target.startsWith('#');
+            const apiTarget = isGroup ? target.slice(1) : target;
+            
+            const endpoint = isGroup 
+                ? `${API_BASE_URL}/chat/group/history?group_name=${encodeURIComponent(apiTarget)}` 
+                : `${API_BASE_URL}/chat/one_to_one/history?target_username=${encodeURIComponent(apiTarget)}`;
+
+            clearMessages(); displayMessage('System', `Loading history for ${target}...`, 'system');
+            try {
+                const history = await jsonFetch(endpoint);
+                displayMessage('System', `--- History Loaded (${history.length} messages) ---`, 'system');
+                if (!history.length) displayMessage('System', 'No messages found in history.', 'system');
+                history.forEach(msg => displayMessage(msg.sender_username, msg.content, msg.sender_username === currentUsername ? 'sent' : 'received', isGroup ? apiTarget : null));
+            } catch (err) {
+                displayMessage('System', `Error loading history: ${err.message}`, 'system');
+            }
+        });
+
+        // WebSocket connection
+        function normalizeWsUrl(apiBase) {
+            try {
+                const u = new URL(apiBase);
+                u.protocol = (u.protocol === 'https:') ? 'wss:' : 'ws:';
+                return u.toString().replace(/\/$/, '');
+            } catch (e) {
+                return apiBase.replace(/^http/, 'ws').replace(/\/$/, '');
+            }
+        }
+
+        function connectWebSocket(username) {
+            if (ws) { try { ws.close(); } catch (e) {} }
+            const wsBase = normalizeWsUrl(API_BASE_URL);
+            const url = `${wsBase}/ws/chat?token=${encodeURIComponent(token)}`;
+            ws = new WebSocket(url);
+
+            ws.onopen = () => displayMessage('System', 'WebSocket connection established.', 'system');
+
+            ws.onmessage = (event) => {
+                let data;
+                try { data = JSON.parse(event.data); } catch (e) { displayMessage('System', 'Received non-JSON message', 'system'); return; }
+                
+                // Handle Typing Indicators
+                if (data.type === 'typing' || data.type === 'stopped_typing') {
+                    if (data.type === 'typing') {
+                        typingIndicator.textContent = `${data.sender_username} is typing in ${data.target}...`;
+                    } else {
+                        typingIndicator.textContent = ''; // Clear indicator
+                    }
+                    return;
+                }
+
+                if (data.type === 'system' || data.type === 'error') { 
+                    displayMessage('System', data.content, 'system'); 
+                    return; 
+                }
+
+                const isGroup = !!data.group;
+                const type = data.sender === username ? 'sent' : 'received';
+                displayMessage(data.sender, data.content, type, isGroup ? data.group : null);
+            };
+
+            ws.onclose = (event) => {
+                if (event && event.code !== 1000) displayMessage('System', `Connection closed unexpectedly (Code: ${event.code}).`, 'system');
+                else displayMessage('System', 'Connection closed.', 'system');
+            };
+
+            ws.onerror = (err) => { console.error('WebSocket Error:', err); displayMessage('System', 'WebSocket error encountered.', 'system'); };
+        }
+
+        // TYPING INDICATOR SEND LOGIC (NEW)
+        function handleTyping() {
+            if (!ws || ws.readyState !== WebSocket.OPEN) return;
+            const target = targetUser ? targetUser.value.trim().replace('#', '') : '';
+            if (!target) return; // Need a target to send a typing signal
+
+            if (!isTyping) {
+                // Start typing
+                ws.send(JSON.stringify({ type: "typing", target: target }));
+                isTyping = true;
+            }
+
+            // Reset the timeout timer
+            clearTimeout(typingTimeout);
+            typingTimeout = setTimeout(() => {
+                // Stop typing after 3 seconds of inactivity
+                ws.send(JSON.stringify({ type: "stopped_typing", target: target }));
+                isTyping = false;
+            }, 3000);
+        }
+
+        // Send message
+        function sendMessage() {
+            if (!ws || ws.readyState !== WebSocket.OPEN) { displayMessage('System', '❌ WebSocket not connected. Please log in first.', 'system'); return; }
+
+            const target = targetUser ? targetUser.value.trim() : '';
+            const content = messageInput.value.trim();
+
+            if (groupSection && !groupSection.classList.contains('hidden')) { displayMessage('System', '❌ Please close the Group Actions section before sending a message.', 'system'); return; }
+            if (!target) { displayMessage('System', '❌ Please specify a recipient (User or #group).', 'system'); return; }
+            if (!content) { displayMessage('System', '❌ Cannot send an empty message.', 'system'); return; }
+
+            const isGroup = target.startsWith('#');
+            const messageType = isGroup ? 'group' : 'one_to_one';
+            
+            const recipientKey = isGroup ? 'group_name' : 'recipient_username';
+            const recipientValue = target.replace('#', '');
+
+            const payload = { 
+                type: messageType, 
+                content: content,
+                sender: currentUsername,
+                [recipientKey]: recipientValue, 
+            };
+            
+            ws.send(JSON.stringify(payload));
+            messageInput.value = '';
+            
+            // Explicitly send "stopped_typing" after sending the message
+            if (isTyping) {
+                ws.send(JSON.stringify({ type: "stopped_typing", target: recipientValue }));
+                isTyping = false;
+                clearTimeout(typingTimeout);
+            }
+        }
+
+        sendBtn.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keydown', (e) => { 
+            if (e.key === 'Enter') { 
+                e.preventDefault(); 
+                sendMessage(); 
+            }
+        });
+        
+        // ADDED: Listener for typing logic
+        messageInput.addEventListener('input', handleTyping); 
+
+        // update password length helper
+        const regPass = $('registerPassword');
+        if (regPass && passwordLengthMsg) regPass.addEventListener('input', () => {
+            passwordLengthMsg.textContent = `${regPass.value.length} / ${MAX_PASSWORD_LENGTH} characters`;
+        });
+
+    })();
+    </script>
 </body>
 </html>
