@@ -263,7 +263,8 @@ async def get_chat_history_by_username(
     # 3. Format and return the response
     return [
         MessageResponse(
-            message_id=msg.id,
+            # 🛑 FIX APPLIED HERE: Changed 'message_id' to 'id' to match Pydantic model
+            id=msg.id,
             sender_username=msg.sender.username,
             content=msg.content,
             timestamp=msg.timestamp,
@@ -296,7 +297,8 @@ async def get_group_chat_history_by_name(
     history = await chat_service.get_group_history(group.id)
     return [
         MessageResponse(
-            message_id=msg.id,
+            # 🛑 FIX APPLIED HERE: Changed 'message_id' to 'id' to match Pydantic model
+            id=msg.id,
             sender_username=msg.sender.username,
             content=msg.content,
             timestamp=msg.timestamp,
@@ -442,7 +444,7 @@ class ChatConsumer:
         if not all([msg_type, content]):
              await manager.send_personal_message(
                  json.dumps({"type": "error", "content": "Missing message type or content"}), self.user_id
-             )
+               )
              return
         
         # Specific target check
