@@ -8,6 +8,10 @@ The submission includes both:
 - The backend server code, and  
 - A minimal single-file HTML/JavaScript client for testing the complete functionality end-to-end.
 
+### Live Demo:
+
+[![Watch Demo Video](https://img.shields.io/badge/DEMO-WATCH_VIDEO_ON_DRIVE-red?style=for-the-badge&logo=googledrive)](https://drive.google.com/file/d/17uIrqAqoxhBu-SFXYkkOZhoGk3aQFZI-/view?usp=sharing)
+
 ---
 
 ## 🛠️ Tech Stack
