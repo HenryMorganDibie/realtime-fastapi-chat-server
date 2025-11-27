@@ -100,11 +100,13 @@
         let token = null;
         let ws = null;
         let currentUsername = null;
-        let typingTimeout = null; // Added for typing indicator
-        let isTyping = false;     // Added for typing indicator
+        let typingTimeout = null;
+        let isTyping = false;
 
         const MAX_PASSWORD_LENGTH = 72;
-        const API_BASE_URL = 'http://localhost:8000';
+        // --- FIX START: Use relative path for universal access ---
+        const API_BASE_URL = ''; // Now an empty string, meaning fetch calls use the current host/port
+        // --- FIX END ---
 
         // DOM cache
         const $ = sel => document.getElementById(sel);
@@ -123,7 +125,7 @@
         const groupMembersInput = $('groupMembers');
         const createGroupBtn = $('createGroupBtn');
         const sendBtn = $('sendBtn');
-        const typingIndicator = $('typingIndicator'); // Added
+        const typingIndicator = $('typingIndicator');
 
         // Helpers
         function show(el) { el && el.classList.remove('hidden'); }
@@ -156,7 +158,10 @@
             const headers = Object.assign({}, opts.headers || {});
             if (token) headers['Authorization'] = `Bearer ${token}`;
             const cfg = Object.assign({}, opts, { headers });
-            const res = await fetch(url, cfg);
+            
+            // --- NOTE: Because API_BASE_URL is now '', this uses a relative path (e.g., /auth/precheck) ---
+            const res = await fetch(url, cfg); 
+            
             if (!res.ok) {
                 let body;
                 try { body = await res.json(); } catch (e) { body = { detail: await res.text() }; }
@@ -194,6 +199,7 @@
             if (!username) { setText(preCheckMsg, '❌ Username cannot be empty.'); show(preCheckMsg); return; }
             currentUsername = username;
             try {
+                // API_BASE_URL is '' now, so this call is relative to the current host (e.g. /auth/precheck)
                 const data = await jsonFetch(`${API_BASE_URL}/auth/precheck`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -205,7 +211,8 @@
                 $('loginEmail').value = username + '@test.com'; // Pre-fill email for convenience
                 $('registerEmail').value = username + '@test.com';
             } catch (err) {
-                setText(preCheckMsg, 'Error checking username. Server may be down.');
+                // This is the error that was showing on your friend's laptop
+                setText(preCheckMsg, 'Error checking username. Server may be down.'); 
                 show(preCheckMsg);
             }
         });
@@ -331,6 +338,14 @@
 
         // WebSocket connection
         function normalizeWsUrl(apiBase) {
+            // --- FIX START: Dynamic WebSocket URL ---
+            // If apiBase is empty, derive the base from the current window location
+            if (!apiBase) {
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                return `${protocol}//${window.location.host}`;
+            }
+            // --- FIX END ---
+            
             try {
                 const u = new URL(apiBase);
                 u.protocol = (u.protocol === 'https:') ? 'wss:' : 'ws:';

@@ -150,22 +150,4 @@ To test:
 
 - Test 1:1 chat, Group chat, and Typing Indicators in real-time.
 
-## 📢 Submission Note
-
-The test instructions required placing:
-
-- The backend code in this repository, and
-
-- The minimal frontend client in a separate frontend repository (punch-frontend-test).
-
-**Reason for Combined Submission**
-
-During final testing, the designated frontend repository
-(https://github.com/punchagency/punch-frontend-test
-)
-was inaccessible (returned a 404 error).
-
-To ensure the full, working solution could be reviewed within the deadline,
-the minimal HTML/JS client (app/static/index.html) has been included here.
-
-✅ The included client successfully demonstrates all backend functionalities end-to-end.
+This project demonstrates my ability to build full-stack, real-time, and secure web applications using FastAPI, WebSockets, and modern Python tooling.
